@@ -64,7 +64,6 @@ export default {
       }
     },
     drawAll() {
-
       this.ctx.clearRect(0, 0, this.clientWidth, this.clientHeight);
       this.drawPlane(0);
       this.drawTarget();
@@ -109,7 +108,7 @@ export default {
       if (length < _MAX_TARGET) {
         let txtArr = this.generateWord(_MAX_TARGET - length);
         for (let i = 0; i < _MAX_TARGET - length; i++) {
-          const actualBlood = (Math.floor(Math.random() * 50) + 1);
+          const totalBlood = (Math.floor(Math.random() * 50) + 1);
           this.targetArr.push({
             x: this.getRandomInt(
               _TARGET_CONFIG.radius,
@@ -117,8 +116,9 @@ export default {
             ),
             y: _TARGET_CONFIG.radius * 2,
             txt: txtArr[i],
-            actualBlood: actualBlood,
-            blood: actualBlood,
+            totalBlood: totalBlood,
+            actualBlood: totalBlood,
+            blood: totalBlood,
             dx: (_TARGET_CONFIG.speed * Math.random().toFixed(1)) / 2,
             dy: _TARGET_CONFIG.speed * Math.random().toFixed(1),
             rotate: 0
@@ -161,9 +161,11 @@ export default {
           _TARGET_CONFIG.radius * 2 + 3,
           "yellow"
         );
+        const blood = item.blood + "/" + item.totalBlood
+        // const blood = item.blood + "/" + item.actualBlood
         this.drawText(
-          item.blood + "/" + item.actualBlood,
-          -(item.blood + "/" + item.actualBlood).length * 2.5,
+          blood,
+          - blood.length * 2.5,
           _TARGET_CONFIG.radius * 2 + 15,
           "yellow"
         );
@@ -267,7 +269,7 @@ export default {
         if (this.targetArr[targetArrIndex].blood == 0) {
           // 所有子弹全部击中了目标
           let word = this.targetArr[targetArrIndex].txt;
-          const actualBlood = (Math.floor(Math.random() * 50) + 1);
+          const totalBlood = (Math.floor(Math.random() * 50) + 1);
           this.targetArr[targetArrIndex] = {
             // 生成新的目标
             x: this.getRandomInt(
@@ -276,8 +278,9 @@ export default {
             ),
             y: _TARGET_CONFIG.radius * 2,
             txt: this.generateWord(1)[0],
-            actualBlood: actualBlood,
-            blood: actualBlood,
+            totalBlood: totalBlood,
+            actualBlood: totalBlood,
+            blood: totalBlood,
             dx: (_TARGET_CONFIG.speed * Math.random().toFixed(1)) / 2,
             dy: _TARGET_CONFIG.speed * Math.random().toFixed(1),
             rotate: 0
