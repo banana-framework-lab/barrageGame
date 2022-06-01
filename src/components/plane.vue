@@ -65,6 +65,7 @@ export default {
       this.autoShot()
     }, 300)
 
+    this.getTargetList()
     setInterval(() => {
       this.getTargetList()
     }, 5000)
@@ -82,9 +83,9 @@ export default {
       this.ctx.clearRect(0, 0, this.clientWidth, this.clientHeight);
       this.drawBackground();
       this.generateTarget()
-      this.drawPlane();
-      this.drawTarget();
       this.drawBullet();
+      this.drawTarget();
+      this.drawPlane();
       this.drawScore();
     },
     drawBackground() {
@@ -117,6 +118,7 @@ export default {
       this.ctx.beginPath();
       this.ctx.arc(this.clientWidth / 2, this.clientHeight - 40, 20, 0, 2 * Math.PI);
       this.ctx.strokeStyle = '#ffffff'; // 设置绘制圆形边框的颜色
+      this.ctx.lineWidth = 10;
       this.ctx.stroke();
       this.ctx.clip()
       this.ctx.drawImage(
@@ -180,7 +182,8 @@ export default {
     },
     drawScore() {
       // 分数
-      this.drawText("分数：" + String(this.score), 10, this.clientHeight - 10, "#fff");
+      this.ctx.font = "13px 微软雅黑";
+      this.drawText("击败数：" + String(this.score), 10, this.clientHeight - 10, "#fff");
     },
     drawTarget() {
       // 逐帧画目标
@@ -196,22 +199,22 @@ export default {
 
         this.ctx.beginPath();
 
-        this.ctx.font = "10px 微软雅黑";
+        // this.ctx.font = "10px 微软雅黑";
 
-        const name = item.name.slice(0, 5) + "...";
-        this.drawText(
-          name,
-          - name.length * 3,
-          _TARGET_CONFIG.radius * 2 + 3,
-          "yellow"
-        );
-        const blood = item.blood + "/" + item.totalBlood
-        this.drawText(
-          blood,
-          - blood.length * 2.5,
-          _TARGET_CONFIG.radius * 2 + 15,
-          "yellow"
-        );
+        // const name = item.name.slice(0, 5) + "...";
+        // this.drawText(
+        //   name,
+        //   - name.length * 3,
+        //   _TARGET_CONFIG.radius * 2 + 3,
+        //   "yellow"
+        // );
+        // const blood = item.blood + "/" + item.totalBlood
+        // this.drawText(
+        //   blood,
+        //   - blood.length * 2.5,
+        //   _TARGET_CONFIG.radius * 2 + 15,
+        //   "yellow"
+        // );
         this.ctx.closePath();
 
         this.ctx.rotate((item.rotate * Math.PI) / 180);
@@ -224,6 +227,7 @@ export default {
           2 * Math.PI
         );
         this.ctx.strokeStyle = 'yellow'; // 设置绘制圆形边框的颜色
+        this.ctx.lineWidth = 6;
         this.ctx.stroke();
         this.ctx.clip()
         this.ctx.drawImage(
@@ -376,7 +380,7 @@ export default {
             1,
             2 * Math.PI
           );
-          this.ctx.fillStyle = `rgba(193,255,255,${1 - 0.08 * i})`;
+          this.ctx.fillStyle = `rgba(255,255,255,${1 - 0.08 * i})`;
           this.ctx.fill();
           this.ctx.closePath();
         }
@@ -391,27 +395,27 @@ export default {
         },
         {
           name: "广西某男网友",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/16/09/BMjAyMjA1MTYwOTI2NDhfMTM3NzkzODY2MF8yX2hkOTYwXzQ4OQ==_s.jpg@0e_0o_0l_50h_50w_85q.src',
           status: 1
         },
         {
           name: "你肩带掉了～",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2018/05/02/13/BMjAxODA1MDIxMzIyMTFfODU3NzEwODEwXzJfaGQxMjJfNDky_s.jpg@0e_0o_0l_50h_50w_85q.src',
           status: 1
         },
         {
           name: "呵呵呵呵哒",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2021/09/23/22/BMjAyMTA5MjMyMjM3NDlfNjk5NDA0NDE2XzJfaGQ4Ml81NTY=_s.jpg@0e_0o_0l_50h_50w_85q.src',
           status: 1
         },
         {
           name: "呆萌的小楊（歪萌）🙈",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2021/06/07/16/BMjAyMTA2MDcxNjE5MDRfMjM4MTI3NzU5Ml8yX2hkMjAzXzU1MA==_s.jpg@0e_0o_0l_50h_50w_85q.src',
           status: 1
         },
         {
           name: "大老黑呀呀呀",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          image: 'https://p1.a.yximgs.com/uhead/AB/2021/12/15/15/BMjAyMTEyMTUxNTEwNDRfMTM0NjkzMzU0OF8yX2hkMTk3XzIw_s.jpg',
           status: 1
         }
       ];
