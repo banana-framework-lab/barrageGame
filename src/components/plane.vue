@@ -2,8 +2,8 @@
   <div class="type-game">
     <canvas
       id="type"
-      width="450"
-      height="800"
+      width="394"
+      height="700"
     >
     </canvas>
   </div>
