@@ -4,47 +4,58 @@
       id="type"
       width="450"
       height="800"
-    ></canvas>
+    >
+    </canvas>
   </div>
 </template>
 
 <script>
-const _MAX_TARGET = 5; // 画面中一次最多出现的目标
+const _MAX_TARGET = 20; // 画面中一次最多出现的目标
 const _TARGET_CONFIG = {
   // 靶子的固定参数
   speed: 2,
   radius: 13
 }
-const _DICTIONARY = ["呆萌的燕燕", "广西某男网友", "你肩带掉了～", "呵呵呵呵哒，", "呆萌的小楊（歪萌）🙈", "大老黑呀呀呀"];
 export default {
   name: "PlanePage",
   data() {
     return {
+      backgroundImage: null,
+      backgroundY: 0,
+      backgroundSpeed: 0.3,
       ctx: null,
       clientWidth: 0,
       clientHeight: 0,
+      targetPool: [],
       bulletArr: [], // 屏幕中的子弹
       targetArr: [], // 存放当前目标
-      targetImgArr: [],
       planeImg: null,
       currentIndex: -1,
-      wordsPool: [],
       score: 0,
-      gameOver: false,
-      colors: ["#FFFF00", "#FF6666"]
+      colors: ["#FFFF00", "#FF6666"],
+
     };
   },
   mounted() {
-    this.wordsPool = _DICTIONARY.concat([]);
     let container = document.getElementById("type");
+
     this.clientWidth = container.width;
     this.clientHeight = container.height;
+
+    this.backgroundImage = new Image();
+    this.backgroundImage.src = require("@/assets/plane/background.jpg");
+    this.backgroundImage.width = this.clientWidth
+    this.backgroundImage.height = this.clientHeight
+
+
     this.ctx = container.getContext("2d");
 
     this.planeImg = new Image();
     this.planeImg.src = 'https://p1.a.yximgs.com/uhead/AB/2018/11/11/22/BMjAxODExMTEyMjAyMDJfOTc4NjI1MTFfMl9oZDMzN183NTE=_s.jpg';
 
-    this.generateTarget();
+    for (let index = 0; index < _MAX_TARGET; index++) {
+      this.targetArr.push({ status: 0 })
+    }
 
     setInterval(() => {
       this.run()
@@ -53,6 +64,10 @@ export default {
     setInterval(() => {
       this.autoShot()
     }, 300)
+
+    setInterval(() => {
+      this.getTargetList()
+    }, 5000)
 
   },
   methods: {
@@ -65,10 +80,35 @@ export default {
     },
     drawAll() {
       this.ctx.clearRect(0, 0, this.clientWidth, this.clientHeight);
-      this.drawPlane(0);
+      this.drawBackground();
+      this.generateTarget()
+      this.drawPlane();
       this.drawTarget();
       this.drawBullet();
       this.drawScore();
+    },
+    drawBackground() {
+
+      //循环运动
+      this.backgroundY += this.backgroundSpeed;
+      if (this.backgroundY >= this.clientHeight) {
+        this.backgroundY = 0;
+      }
+
+      // 绘制背景
+      this.ctx.drawImage(
+        this.backgroundImage,
+        0, this.backgroundY
+      );
+      //补空白
+      this.ctx.drawImage(
+        this.backgroundImage,
+        0, this.clientHeight - this.backgroundY,
+        this.clientWidth, this.backgroundY,
+        0, 0,
+        this.clientWidth, this.backgroundY
+      );
+      console.log(this.clientHeight - this.backgroundY)
     },
     drawPlane() {
 
@@ -91,41 +131,43 @@ export default {
 
       this.ctx.restore();
     },
-    generateWord(number) {
-      // 从池子里随机挑选一个词，不与已显示的词重复
-      let arr = [];
-      for (let i = 0; i < number; i++) {
-        let random = Math.floor(Math.random() * this.wordsPool.length);
-        arr.push(this.wordsPool[random]);
-        this.wordsPool.splice(random, 1);
-      }
-      return arr;
-    },
     generateTarget() {
       // 随机生成目标
-
-      let length = this.targetArr.length;
+      if (this.targetPool.length <= 0) {
+        return;
+      }
+      let length = this.targetArr.filter((item) => { return item.status == 1 }).length;
       if (length < _MAX_TARGET) {
-        let txtArr = this.generateWord(_MAX_TARGET - length);
         for (let i = 0; i < _MAX_TARGET - length; i++) {
-          const totalBlood = (Math.floor(Math.random() * 50) + 1);
-          this.targetArr.push({
-            x: this.getRandomInt(
-              _TARGET_CONFIG.radius,
-              this.clientWidth - _TARGET_CONFIG.radius
-            ),
-            y: _TARGET_CONFIG.radius * 2,
-            txt: txtArr[i],
-            totalBlood: totalBlood,
-            actualBlood: totalBlood,
-            blood: totalBlood,
-            dx: (_TARGET_CONFIG.speed * Math.random().toFixed(1)) / 2,
-            dy: _TARGET_CONFIG.speed * Math.random().toFixed(1),
-            rotate: 0
-          });
-          const img = new Image();
-          img.src = 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src';
-          this.targetImgArr.push(img)
+          let target = this.targetPool.pop();
+          if (target) {
+            const index = this.targetArr.findIndex((item) => { return item.status == 0 })
+            if (index >= 0) {
+              const totalBlood = (Math.floor(Math.random() * 50) + 1);
+              const img = new Image();
+              img.src = target.image;
+
+              this.targetArr[index] = {
+                x: this.getRandomInt(
+                  _TARGET_CONFIG.radius,
+                  this.clientWidth - _TARGET_CONFIG.radius
+                ),
+                y: _TARGET_CONFIG.radius * 2,
+                name: target.name,
+                image: img,
+                totalBlood: totalBlood,
+                actualBlood: totalBlood,
+                blood: totalBlood,
+                dx: (_TARGET_CONFIG.speed * Math.random().toFixed(1)) / 2,
+                dy: _TARGET_CONFIG.speed * Math.random().toFixed(1) + 0.1,
+                rotate: 0,
+                status: 1
+              }
+            }
+          }
+          if (this.targetPool.length > 0) {
+            break;
+          }
         }
       }
     },
@@ -133,7 +175,6 @@ export default {
       return Math.floor(Math.random() * (m - n + 1)) + n;
     },
     drawText(txt, x, y, color) {
-
       this.ctx.fillStyle = color;
       this.ctx.fillText(txt, x, y);
     },
@@ -144,7 +185,11 @@ export default {
     drawTarget() {
       // 逐帧画目标
 
-      this.targetArr.forEach((item, index) => {
+      this.targetArr.forEach((item) => {
+        if (item.status == 0) {
+          return
+        }
+
         this.ctx.save();
 
         this.ctx.translate(item.x, item.y); //设置旋转的中心点
@@ -153,8 +198,7 @@ export default {
 
         this.ctx.font = "10px 微软雅黑";
 
-
-        const name = item.txt.slice(0, 5) + "...";
+        const name = item.name.slice(0, 5) + "...";
         this.drawText(
           name,
           - name.length * 3,
@@ -162,7 +206,6 @@ export default {
           "yellow"
         );
         const blood = item.blood + "/" + item.totalBlood
-        // const blood = item.blood + "/" + item.actualBlood
         this.drawText(
           blood,
           - blood.length * 2.5,
@@ -184,7 +227,7 @@ export default {
         this.ctx.stroke();
         this.ctx.clip()
         this.ctx.drawImage(
-          this.targetImgArr[index],
+          item.image,
           -1 * _TARGET_CONFIG.radius,
           -1 * _TARGET_CONFIG.radius,
           _TARGET_CONFIG.radius * 2,
@@ -192,6 +235,7 @@ export default {
         );
 
         this.ctx.restore();
+
         item.y += item.dy;
         item.x += item.dx;
         if (item.x < 0 || item.x > this.clientWidth) {
@@ -208,7 +252,7 @@ export default {
     autoShot() {
       if (this.currentIndex === -1) {
         // 当前没有在射击的目标
-        const isHasTarget = this.targetArr.findIndex(item => { return item.actualBlood > 0 })
+        const isHasTarget = this.targetArr.findIndex(item => { return item.actualBlood > 0 && item.status == 1 })
         if (!(isHasTarget >= 0)) {
           return
         }
@@ -267,25 +311,33 @@ export default {
         // 子弹击中了目标
         this.targetArr[targetArrIndex].blood--;
         if (this.targetArr[targetArrIndex].blood == 0) {
-          // 所有子弹全部击中了目标
-          let word = this.targetArr[targetArrIndex].txt;
-          const totalBlood = (Math.floor(Math.random() * 50) + 1);
-          this.targetArr[targetArrIndex] = {
-            // 生成新的目标
-            x: this.getRandomInt(
-              _TARGET_CONFIG.radius,
-              this.clientWidth - _TARGET_CONFIG.radius
-            ),
-            y: _TARGET_CONFIG.radius * 2,
-            txt: this.generateWord(1)[0],
-            totalBlood: totalBlood,
-            actualBlood: totalBlood,
-            blood: totalBlood,
-            dx: (_TARGET_CONFIG.speed * Math.random().toFixed(1)) / 2,
-            dy: _TARGET_CONFIG.speed * Math.random().toFixed(1),
-            rotate: 0
-          };
-          this.wordsPool.push(word); // 被击中的目标词重回池子里
+          let target = this.targetPool.pop();
+          if (target) {
+            const totalBlood = (Math.floor(Math.random() * 50) + 1);
+            const img = new Image();
+            img.src = target.image;
+
+            this.targetArr[targetArrIndex] = {
+              x: this.getRandomInt(
+                _TARGET_CONFIG.radius,
+                this.clientWidth - _TARGET_CONFIG.radius
+              ),
+              y: _TARGET_CONFIG.radius * 2,
+              name: target.name,
+              image: img,
+              totalBlood: totalBlood,
+              actualBlood: totalBlood,
+              blood: totalBlood,
+              dx: (_TARGET_CONFIG.speed * Math.random().toFixed(1)) / 2,
+              dy: _TARGET_CONFIG.speed * Math.random().toFixed(1),
+              rotate: 0,
+              status: 1
+            };
+          } else {
+            this.targetArr[targetArrIndex] = {
+              status: 0
+            }
+          }
 
           if (this.currentIndex == targetArrIndex) {
             this.currentIndex = -1;
@@ -329,6 +381,43 @@ export default {
           this.ctx.closePath();
         }
       });
+    },
+    getTargetList() {
+      const res = [
+        {
+          name: "呆萌的燕燕",
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          status: 1
+        },
+        {
+          name: "广西某男网友",
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          status: 1
+        },
+        {
+          name: "你肩带掉了～",
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          status: 1
+        },
+        {
+          name: "呵呵呵呵哒",
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          status: 1
+        },
+        {
+          name: "呆萌的小楊（歪萌）🙈",
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          status: 1
+        },
+        {
+          name: "大老黑呀呀呀",
+          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
+          status: 1
+        }
+      ];
+      for (const key in res) {
+        this.targetPool.push(res[key]);
+      }
     }
   }
 }
@@ -339,7 +428,7 @@ export default {
   background: #7ddbcf;
   text-align: center;
   #type {
-    background: #000000;  
+    background: #ffffff;
   }
 }
 </style>
