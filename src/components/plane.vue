@@ -14,11 +14,6 @@
 import { getBarrage } from "@/api/KuaiShou.js";
 
 const _MAX_TARGET = 20; // 画面中一次最多出现的目标
-const _TARGET_CONFIG = {
-  // 靶子的固定参数
-  speed: 2,
-  radius: 13
-}
 export default {
   name: "PlanePage",
   data() {
@@ -42,7 +37,7 @@ export default {
   mounted() {
     let container = document.getElementById("type");
 
-    this.offsetTime = (new Date()).valueOf()
+    this.offsetTime = (new Date()).valueOf() - 60000
 
     this.clientWidth = container.width;
     this.clientHeight = container.height;
@@ -154,19 +149,19 @@ export default {
 
               this.targetArr[index] = {
                 x: this.getRandomInt(
-                  _TARGET_CONFIG.radius,
-                  this.clientWidth - _TARGET_CONFIG.radius
+                  this.getTargetRadius(target.totalBlood),
+                  this.clientWidth - this.getTargetRadius(target.totalBlood)
                 ),
-                y: _TARGET_CONFIG.radius * 2,
+                y: this.getTargetRadius(target.totalBlood) * 2,
                 name: target.name,
                 image: img,
                 totalBlood: target.totalBlood,
                 actualBlood: target.totalBlood,
                 blood: target.totalBlood,
-                dx: (_TARGET_CONFIG.speed * Math.random().toFixed(1)) / 2,
-                dy: _TARGET_CONFIG.speed * Math.random().toFixed(1) + 0.1,
                 rotate: 0,
-                status: 1
+                status: 1,
+                xWay: ((Math.floor(Math.random() * 50) + 1) % 2 == 0) ? 1 : -1,
+                moveConstant: Math.random().toFixed(1)
               }
             }
           }
@@ -188,6 +183,24 @@ export default {
       this.ctx.font = "13px 微软雅黑";
       this.drawText("击败数：" + String(this.score), 10, this.clientHeight - 10, "#fff");
     },
+    getTargetRadius(blood) {
+      if (blood >= 40) {
+        return 28
+      } else if (blood < 40 && blood >= 20) {
+        return 20
+      } else {
+        return 13
+      }
+    },
+    getTargetSpeed(blood) {
+      if (blood >= 40) {
+        return 0.5
+      } else if (blood < 40 && blood >= 20) {
+        return 1
+      } else {
+        return 2
+      }
+    },
     drawTarget() {
       // 逐帧画目标
 
@@ -202,20 +215,20 @@ export default {
 
         this.ctx.beginPath();
 
-        // this.ctx.font = "10px 微软雅黑";
+        this.ctx.font = "10px 微软雅黑";
 
-        // const name = item.name.slice(0, 5) + "...";
-        // this.drawText(
-        //   name,
-        //   - name.length * 3,
-        //   _TARGET_CONFIG.radius * 2 + 3,
-        //   "yellow"
-        // );
+        const name = item.name.slice(0, 5) + "...";
+        this.drawText(
+          name,
+          - name.length * 3,
+          this.getTargetRadius(item.blood) * 2,
+          "yellow"
+        );
         // const blood = item.blood + "/" + item.totalBlood
         // this.drawText(
         //   blood,
         //   - blood.length * 2.5,
-        //   _TARGET_CONFIG.radius * 2 + 15,
+        //   this.getTargetRadius(item.blood) * 2 + 15,
         //   "yellow"
         // );
         this.ctx.closePath();
@@ -225,7 +238,7 @@ export default {
         this.ctx.arc(
           0,
           0,
-          _TARGET_CONFIG.radius,
+          this.getTargetRadius(item.blood),
           0,
           2 * Math.PI
         );
@@ -235,22 +248,24 @@ export default {
         this.ctx.clip()
         this.ctx.drawImage(
           item.image,
-          -1 * _TARGET_CONFIG.radius,
-          -1 * _TARGET_CONFIG.radius,
-          _TARGET_CONFIG.radius * 2,
-          _TARGET_CONFIG.radius * 2
+          -1 * this.getTargetRadius(item.blood),
+          -1 * this.getTargetRadius(item.blood),
+          this.getTargetRadius(item.blood) * 2,
+          this.getTargetRadius(item.blood) * 2
         );
 
         this.ctx.restore();
 
-        item.y += item.dy;
-        item.x += item.dx;
+        let yStep = (this.getTargetSpeed(item.blood) * item.moveConstant) / 2;
+
+        item.y += yStep > 1 ? yStep : ++yStep;
+        item.x += item.xWay * (this.getTargetSpeed(item.blood) * item.moveConstant + 0.1);
         if (item.x < 0 || item.x > this.clientWidth) {
-          item.dx *= -1;
+          item.xWay *= -1;
         }
-        if (item.y > this.clientHeight + _TARGET_CONFIG.radius) {
+        if (item.y > this.clientHeight + this.getTargetRadius(item.blood)) {
           // 碰到底部了
-          item.y = _TARGET_CONFIG.radius * 2
+          item.y = this.getTargetRadius(item.blood) * 2
         }
         // 旋转
         item.rotate += 5;
@@ -310,10 +325,10 @@ export default {
       // 判断是否击中目标
       let targetArrIndex = item.targetIndex;
       if (
-        item.x > this.targetArr[targetArrIndex].x - _TARGET_CONFIG.radius &&
-        item.x < this.targetArr[targetArrIndex].x + _TARGET_CONFIG.radius &&
-        item.y > this.targetArr[targetArrIndex].y - _TARGET_CONFIG.radius &&
-        item.y < this.targetArr[targetArrIndex].y + _TARGET_CONFIG.radius
+        item.x > this.targetArr[targetArrIndex].x - this.getTargetRadius(this.targetArr[targetArrIndex].blood) &&
+        item.x < this.targetArr[targetArrIndex].x + this.getTargetRadius(this.targetArr[targetArrIndex].blood) &&
+        item.y > this.targetArr[targetArrIndex].y - this.getTargetRadius(this.targetArr[targetArrIndex].blood) &&
+        item.y < this.targetArr[targetArrIndex].y + this.getTargetRadius(this.targetArr[targetArrIndex].blood)
       ) {
         // 子弹击中了目标
         this.targetArr[targetArrIndex].blood--;
