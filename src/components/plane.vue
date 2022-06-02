@@ -10,6 +10,9 @@
 </template>
 
 <script>
+
+import { getBarrage } from "@/api/KuaiShou.js";
+
 const _MAX_TARGET = 20; // 画面中一次最多出现的目标
 const _TARGET_CONFIG = {
   // 靶子的固定参数
@@ -33,11 +36,13 @@ export default {
       currentIndex: -1,
       score: 0,
       colors: ["#FFFF00", "#FF6666"],
-
+      offsetTime: 0
     };
   },
   mounted() {
     let container = document.getElementById("type");
+
+    this.offsetTime = (new Date()).valueOf()
 
     this.clientWidth = container.width;
     this.clientHeight = container.height;
@@ -109,7 +114,6 @@ export default {
         0, 0,
         this.clientWidth, this.backgroundY
       );
-      console.log(this.clientHeight - this.backgroundY)
     },
     drawPlane() {
 
@@ -145,7 +149,6 @@ export default {
           if (target) {
             const index = this.targetArr.findIndex((item) => { return item.status == 0 })
             if (index >= 0) {
-              const totalBlood = (Math.floor(Math.random() * 50) + 1);
               const img = new Image();
               img.src = target.image;
 
@@ -157,9 +160,9 @@ export default {
                 y: _TARGET_CONFIG.radius * 2,
                 name: target.name,
                 image: img,
-                totalBlood: totalBlood,
-                actualBlood: totalBlood,
-                blood: totalBlood,
+                totalBlood: target.totalBlood,
+                actualBlood: target.totalBlood,
+                blood: target.totalBlood,
                 dx: (_TARGET_CONFIG.speed * Math.random().toFixed(1)) / 2,
                 dy: _TARGET_CONFIG.speed * Math.random().toFixed(1) + 0.1,
                 rotate: 0,
@@ -315,34 +318,9 @@ export default {
         // 子弹击中了目标
         this.targetArr[targetArrIndex].blood--;
         if (this.targetArr[targetArrIndex].blood == 0) {
-          let target = this.targetPool.pop();
-          if (target) {
-            const totalBlood = (Math.floor(Math.random() * 50) + 1);
-            const img = new Image();
-            img.src = target.image;
-
-            this.targetArr[targetArrIndex] = {
-              x: this.getRandomInt(
-                _TARGET_CONFIG.radius,
-                this.clientWidth - _TARGET_CONFIG.radius
-              ),
-              y: _TARGET_CONFIG.radius * 2,
-              name: target.name,
-              image: img,
-              totalBlood: totalBlood,
-              actualBlood: totalBlood,
-              blood: totalBlood,
-              dx: (_TARGET_CONFIG.speed * Math.random().toFixed(1)) / 2,
-              dy: _TARGET_CONFIG.speed * Math.random().toFixed(1),
-              rotate: 0,
-              status: 1
-            };
-          } else {
-            this.targetArr[targetArrIndex] = {
-              status: 0
-            }
+          this.targetArr[targetArrIndex] = {
+            status: 0
           }
-
           if (this.currentIndex == targetArrIndex) {
             this.currentIndex = -1;
           }
@@ -387,41 +365,25 @@ export default {
       });
     },
     getTargetList() {
-      const res = [
-        {
-          name: "呆萌的燕燕",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/24/01/BMjAyMjA1MjQwMTI4MDhfNTk5ODQzMDI1XzJfaGQyMDdfNjg5_s.jpg@0e_0o_0l_50h_50w_85q.src',
-          status: 1
-        },
-        {
-          name: "广西某男网友",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2022/05/16/09/BMjAyMjA1MTYwOTI2NDhfMTM3NzkzODY2MF8yX2hkOTYwXzQ4OQ==_s.jpg@0e_0o_0l_50h_50w_85q.src',
-          status: 1
-        },
-        {
-          name: "你肩带掉了～",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2018/05/02/13/BMjAxODA1MDIxMzIyMTFfODU3NzEwODEwXzJfaGQxMjJfNDky_s.jpg@0e_0o_0l_50h_50w_85q.src',
-          status: 1
-        },
-        {
-          name: "呵呵呵呵哒",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2021/09/23/22/BMjAyMTA5MjMyMjM3NDlfNjk5NDA0NDE2XzJfaGQ4Ml81NTY=_s.jpg@0e_0o_0l_50h_50w_85q.src',
-          status: 1
-        },
-        {
-          name: "呆萌的小楊（歪萌）🙈",
-          image: 'https://aliimg.a.yximgs.com/uhead/AB/2021/06/07/16/BMjAyMTA2MDcxNjE5MDRfMjM4MTI3NzU5Ml8yX2hkMjAzXzU1MA==_s.jpg@0e_0o_0l_50h_50w_85q.src',
-          status: 1
-        },
-        {
-          name: "大老黑呀呀呀",
-          image: 'https://p1.a.yximgs.com/uhead/AB/2021/12/15/15/BMjAyMTEyMTUxNTEwNDRfMTM0NjkzMzU0OF8yX2hkMTk3XzIw_s.jpg',
-          status: 1
+      getBarrage(this.offsetTime).then(res => {
+        if (res.data.code == 1) {
+          res.data.data.forEach(item => {
+            const object = {
+              name: item.name,
+              image: item.headUrl,
+              status: 1,
+              totalBlood: (Math.floor(Math.random() * 50) + 1)
+            }
+            if (
+              this.targetArr.findIndex(item => item.name == object.name) < 0 &&
+              this.targetPool.findIndex(item => item.name == object.name) < 0
+            ) {
+              this.targetPool.push(object);
+            }
+          })
+          this.offsetTime = (new Date()).valueOf()
         }
-      ];
-      for (const key in res) {
-        this.targetPool.push(res[key]);
-      }
+      })
     }
   }
 }
