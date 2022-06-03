@@ -1,9 +1,8 @@
 <template>
   <div class="type-game">
     <canvas
-      id="type"
-      width="394"
-      height="700"
+      id="container"
+      style="margin:0px; padding:0px;"
     >
     </canvas>
   </div>
@@ -35,9 +34,12 @@ export default {
     };
   },
   mounted() {
-    let container = document.getElementById("type");
+    let container = document.getElementById("container");
+    const ratio = window.devicePixelRatio || 1;
+    container.width = Math.floor(215 * ratio);
+    container.height = Math.floor(384.5 * ratio);
 
-    this.offsetTime = (new Date()).valueOf() - 60000
+    this.offsetTime = (new Date()).valueOf()
 
     this.clientWidth = container.width;
     this.clientHeight = container.height;
@@ -47,15 +49,21 @@ export default {
     this.backgroundImage.width = this.clientWidth
     this.backgroundImage.height = this.clientHeight
 
-
-    this.ctx = container.getContext("2d");
+    this.ctx = container.getContext("2d")
 
     this.planeImg = new Image();
-    this.planeImg.src = 'https://p1.a.yximgs.com/uhead/AB/2018/11/11/22/BMjAxODExMTEyMjAyMDJfOTc4NjI1MTFfMl9oZDMzN183NTE=_s.jpg';
+    this.planeImg.src = 'https://p2.a.yximgs.com/uhead/AB/2019/12/05/13/BMjAxOTEyMDUxMzIyMDVfNjIyODE3MTc4XzJfaGQxNzhfOTU5_s.jpg';
 
     for (let index = 0; index < _MAX_TARGET; index++) {
       this.targetArr.push({ status: 0 })
     }
+
+    const _this = this
+    function animloop() {
+      _this.run();
+      window.requestAnimationFrame(animloop);
+    }
+    animloop()
 
     setInterval(() => {
       this.run()
@@ -63,12 +71,12 @@ export default {
 
     setInterval(() => {
       this.autoShot()
-    }, 300)
+    }, 500)
 
     this.getTargetList()
     setInterval(() => {
       this.getTargetList()
-    }, 5000)
+    }, 10000)
 
   },
   methods: {
@@ -194,11 +202,11 @@ export default {
     },
     getTargetSpeed(blood) {
       if (blood >= 40) {
-        return 0.5
+        return 0.2
       } else if (blood < 40 && blood >= 20) {
-        return 1
+        return 0.5
       } else {
-        return 2
+        return 1
       }
     },
     drawTarget() {
@@ -215,15 +223,15 @@ export default {
 
         this.ctx.beginPath();
 
-        this.ctx.font = "10px 微软雅黑";
+        // this.ctx.font = "11px 微软雅黑";
 
-        const name = item.name.slice(0, 5) + "...";
-        this.drawText(
-          name,
-          - name.length * 3,
-          this.getTargetRadius(item.blood) * 2,
-          "yellow"
-        );
+        // const name = item.name.slice(0, 5) + "...";
+        // this.drawText(
+        //   name,
+        //   - name.length * 3,
+        //   this.getTargetRadius(item.blood) * 2,
+        //   "yellow"
+        // );
         // const blood = item.blood + "/" + item.totalBlood
         // this.drawText(
         //   blood,
@@ -258,7 +266,7 @@ export default {
 
         let yStep = (this.getTargetSpeed(item.blood) * item.moveConstant) / 2;
 
-        item.y += yStep > 1 ? yStep : ++yStep;
+        item.y += yStep > 0 ? yStep : yStep + 0.5;
         item.x += item.xWay * (this.getTargetSpeed(item.blood) * item.moveConstant + 0.1);
         if (item.x < 0 || item.x > this.clientWidth) {
           item.xWay *= -1;
@@ -268,7 +276,7 @@ export default {
           item.y = this.getTargetRadius(item.blood) * 2
         }
         // 旋转
-        item.rotate += 5;
+        item.rotate += 1;
       });
     },
     autoShot() {
@@ -406,10 +414,14 @@ export default {
 
 <style scoped lang="scss">
 .type-game {
+  padding: 0px !important;
+  margin: 0px !important;
   background: #7ddbcf;
   text-align: center;
-  #type {
+  #container {
+    cursor: none;
     background: #ffffff;
+    display: block;
   }
 }
 </style>
