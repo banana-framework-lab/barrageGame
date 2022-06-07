@@ -5,12 +5,6 @@
       style="margin:0px; padding:0px;"
     >
     </canvas>
-    <div>
-      <div
-        v-for="(item,index) in targetArr"
-        :key="index"
-      >{{Math.ceil(item.x)}}-{{Math.ceil(item.y)}}</div>
-    </div>
   </div>
 </template>
 
@@ -18,12 +12,12 @@
 
 import { getBarrage } from "@/api/KuaiShou.js";
 
-const _MAX_TARGET = 1; // 画面中一次最多出现的目标
+const _MAX_TARGET = 10; // 画面中一次最多出现的目标
 
 const CANVAS = {
   canvas: null,
-  width: Math.ceil(466 * (window.devicePixelRatio || 1)),
-  height: Math.ceil(700 * (window.devicePixelRatio || 1))
+  width: Math.ceil(466 * 1),
+  height: Math.ceil(700 * 1)
 }
 
 const PLANE = {
@@ -62,33 +56,33 @@ export default {
   mounted() {
     this.intiAll()
 
-    // const _this = this
-    // function animloop() {
-    //   _this.drawAll()
-    //   window.requestAnimationFrame(animloop)
-    // }
-    // animloop()
+    const _this = this
+    function animloop() {
+      _this.drawAll()
+      window.requestAnimationFrame(animloop)
+    }
+    animloop()
 
-    setInterval(() => {
-      this.drawAll()
-    }, 1000)
+    // setInterval(() => {
+    //   this.drawAll()
+    // }, 1000)
 
     setInterval(() => {
       this.generateTarget()
     }, 1000 / 120)
 
-    setTimeout(() => {
-      this.autoShot()
-    }, 1000);
-
-    // setInterval(() => {
+    // setTimeout(() => {
     //   this.autoShot()
-    // }, 500)
+    // }, 1000);
+
+    setInterval(() => {
+      this.autoShot()
+    }, 300)
 
     this.getTargetList()
-    // setInterval(() => {
-    //   this.getTargetList()
-    // }, 10000)
+    setInterval(() => {
+      this.getTargetList()
+    }, 10000)
   },
   methods: {
     intiAll() {
@@ -114,7 +108,7 @@ export default {
       PLANE.image.src = PLANE.imageUrl
     },
     initBulletImgArr() {
-      for (let i = 1; i <= 42; i++) {
+      for (let i = 1; i <= 50; i++) {
         const image = new Image();
         image.src = require("@/assets/plane/bullet/bullet_" + i + ".png");
         this.bulletImgArr.push(image)
@@ -176,6 +170,9 @@ export default {
                   )
                 }
               }
+
+              // initX = 0
+              // initY = PLANE.y + 10
 
               this.$set(this.targetArr, index, {
                 x: initX,
@@ -354,8 +351,8 @@ export default {
         let yStep = (this.getTargetSpeed(item.blood) * item.moveConstant) / 2;
         // let yStep = 5;
 
-        item.y += (item.yWay * (yStep > 0 ? yStep : yStep + 0.5));
-        item.x += (item.xWay * (this.getTargetSpeed(item.blood) * item.moveConstant));
+        item.y += (item.yWay * Math.ceil(yStep > 0 ? yStep : yStep + 0.5));
+        item.x += (item.xWay * Math.ceil(this.getTargetSpeed(item.blood) * item.moveConstant));
 
         if (
           (this.getX(item.x) * this.getX(item.x) + this.getY(item.y) * this.getY(item.y)) <= (PLANE.radius + radius + (PLANE.lineWidth / 2)) * (PLANE.radius + (PLANE.lineWidth / 2) + radius)
@@ -363,7 +360,7 @@ export default {
           item.xWay *= -1;
           item.yWay *= -1;
         } else {
-          if (item.x < Math.ceil(0 + radius) || item.x > (CANVAS.width - radius)) {
+          if (item.x < (0 + radius) || item.x > (CANVAS.width - radius)) {
             item.xWay *= -1;
           }
           if (item.y < (0 + radius) || item.y > (CANVAS.height - radius)) {
@@ -415,7 +412,7 @@ export default {
     // 发射一个子弹
     createBullet(index) {
       this.targetArr[index].actualBlood--
-      const imgIndex = Math.ceil(Math.random() * this.bulletImgArr.length);
+      const imgIndex = Math.floor(Math.random() * this.bulletImgArr.length);
       this.bulletArr.push({
         dx: 1,
         dy: 4,
@@ -460,13 +457,20 @@ export default {
       }
       this.bulletArr = this.bulletArr.filter(this.firedTarget);
       this.bulletArr.forEach(item => {
-        let targetX = this.targetArr[item.targetIndex].x;
-        let targetY = this.targetArr[item.targetIndex].y;
-        let k = (this.getY(PLANE.y) - this.getY(targetY)) / (this.getX(PLANE.x) - this.getX(targetX)); // 飞机头和目标的斜率
-        let b = this.getY(targetY) - k * this.getX(targetX); // 常量b
-        item.y = this.getY(item.y) + (this.getY(targetY) > 0 ? -4 : 4); // y轴偏移一个单位
-        item.x = (this.getY(item.y) - b) / k;
-        console.log(k, b, item.x, item.y)
+        let targetX = this.targetArr[item.targetIndex].x
+        let targetY = this.targetArr[item.targetIndex].y
+        let k = (PLANE.y - targetY) / (PLANE.x - targetX) // 飞机头和目标的斜率
+        let b = targetY - k * targetX // 常量b
+
+        if (Math.abs(k) > 0.3) {
+          item.y = (item.y + (this.getY(targetY) > 0 ? -4 : 4)) // y轴偏移一个单位
+          item.x = (item.y - b) / k
+        } else if (Math.abs(k) < 0.3) {
+          item.x = (this.getX(targetX) > 0 ? item.x + 4.5 : item.x - 4.5)
+          if (Math.abs(k) > 0) {
+            item.y = k * item.x + b
+          }
+        }
         // for (let i = 0; i < 15; i++) {
         //   // 画出拖尾效果
         //   this.ctx.beginPath();
@@ -483,29 +487,30 @@ export default {
         //   this.ctx.closePath();
         // }
 
-        // this.ctx.save();
-        // this.ctx.translate(item.x, item.y); //设置旋转的中心点
-        // this.ctx.rotate((item.rotate += 10 * Math.PI) / 180);
+        this.ctx.save();
+        this.ctx.translate(item.x, item.y); //设置旋转的中心点
+        this.ctx.rotate((item.rotate += 15 * Math.PI) / 180);
 
         // // 设置三角形的起点坐标
-        // this.ctx.moveTo(0, 4.33)
+        // this.ctx.moveTo(0, 8.66)
         // // 设置三角形的第一个坐标点坐标
-        // this.ctx.lineTo(5, -4.33);
+        // this.ctx.lineTo(10, -8.66);
         // // 设置三角形的第二点坐标位置
-        // this.ctx.lineTo(-5, -4.33);
+        // this.ctx.lineTo(-10, -8.66);
         // // 设置自动闭合
         // this.ctx.closePath();
+        // this.ctx.fillStyle = 'red';
         // //进行绘制描边
         // this.ctx.fill();
 
-        // // this.ctx.drawImage(
-        // //   item.img,
-        // //   - 7.5,
-        // //   - 7.5,
-        // //   15,
-        // //   15
-        // // );
-        // this.ctx.restore();
+        this.ctx.drawImage(
+          item.img,
+          - 7.5,
+          - 7.5,
+          15,
+          15
+        );
+        this.ctx.restore();
 
       });
     },
@@ -517,8 +522,8 @@ export default {
               name: item.name,
               image: item.headUrl,
               status: 1,
-              // totalBlood: (Math.ceil(Math.random() * 50) + 1)
-              totalBlood: 99999999999
+              totalBlood: (Math.ceil(Math.random() * 50) + 1)
+              // totalBlood: 99999999999
             }
             if (
               this.targetArr.findIndex(item => item.name == object.name) < 0 &&
