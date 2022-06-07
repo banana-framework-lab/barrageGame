@@ -12,23 +12,26 @@
 
 import { getBarrage } from "@/api/KuaiShou.js";
 
-const _MAX_TARGET = 10; // 画面中一次最多出现的目标
+const _MAX_TARGET = 15; // 画面中一次最多出现的目标
 
 const CANVAS = {
   canvas: null,
-  width: Math.ceil(466 * 1),
-  height: Math.ceil(700 * 1)
+  width: Math.ceil(720 * 1),
+  height: Math.ceil(1280 * 1)
 }
 
 const PLANE = {
   x: CANVAS.width / 2,
   y: CANVAS.height / 2,
   radius: 20,
+  radiusChange: 6,
   // strokeStyle: '#7ddbcf',
   strokeStyle: '#FFFFFF',
-  lineWidth: 8,
+  lineWidth: 2,
+  rotate: 0,
   image: new Image(),
-  imageUrl: 'https://p2.a.yximgs.com/uhead/AB/2019/12/05/13/BMjAxOTEyMDUxMzIyMDVfNjIyODE3MTc4XzJfaGQxNzhfOTU5_s.jpg'
+  imageUrl: require("@/assets/plane/plane.png"),
+  // imageUrl: 'https://p2.a.yximgs.com/uhead/AB/2019/12/05/13/BMjAxOTEyMDUxMzIyMDVfNjIyODE3MTc4XzJfaGQxNzhfOTU5_s.jpg'
 }
 
 const BACKGROUND = {
@@ -66,6 +69,11 @@ export default {
     animloop()
 
     // setInterval(() => {
+    //   PLANE.radius += PLANE.radiusChange
+    //   PLANE.radiusChange = PLANE.radiusChange * -1
+    // }, 300)
+
+    // setInterval(() => {
     //   this.drawAll()
     // }, 100)
 
@@ -79,7 +87,7 @@ export default {
 
     setInterval(() => {
       this.autoShot()
-    }, 300)
+    }, 200)
 
     this.getTargetList()
     setInterval(() => {
@@ -174,7 +182,7 @@ export default {
               }
 
               // initX = 0
-              // initY = PLANE.y + 10
+              // initY = + 50
 
               this.$set(this.targetArr, index, {
                 x: initX,
@@ -249,15 +257,18 @@ export default {
     drawPlane() {
       this.ctx.save();
       this.ctx.beginPath()
-      this.ctx.arc(PLANE.x, PLANE.y, PLANE.radius, 0, 2 * Math.PI)
+      this.ctx.translate(PLANE.x, PLANE.y); //设置旋转的中心点
+      this.ctx.rotate((PLANE.rotate));
+
+      // this.ctx.arc(0, 0, PLANE.radius, 0, 2 * Math.PI)
       this.ctx.strokeStyle = PLANE.strokeStyle
       this.ctx.lineWidth = PLANE.lineWidth;
       this.ctx.stroke();
-      this.ctx.clip()
+      // this.ctx.clip()
       this.ctx.drawImage(
         PLANE.image,
-        PLANE.x - PLANE.radius,
-        PLANE.y - PLANE.radius,
+        0 - PLANE.radius,
+        0 - PLANE.radius,
         PLANE.radius * 2,
         PLANE.radius * 2
       );
@@ -401,9 +412,9 @@ export default {
           if (!(isHasTarget >= 0)) {
             return
           }
-          let index = Math.ceil(Math.random() * this.targetArr.length);
+          let index = Math.floor(Math.random() * this.targetArr.length);
           while (this.targetArr[index].actualBlood <= 0) {
-            index = Math.ceil(Math.random() * this.targetArr.length);
+            index = Math.floor(Math.random() * this.targetArr.length);
           }
           if (index !== -1) {
             this.currentIndex = index;
@@ -426,6 +437,7 @@ export default {
         imgIndex: imgIndex,
         rotate: 0
       });
+      PLANE.rotate = Math.atan2(this.getX(this.targetArr[index].x), this.getY(this.targetArr[index].y))
     },
     firedTarget(item) {
       // 判断是否击中目标
@@ -528,7 +540,7 @@ export default {
               status: 1,
               totalBlood: this.getRandomInt(1, 20)
               // totalBlood: 99999999999
-              // totalBlood: 1
+              // totalBlood: 20
             }
             if (
               this.targetArr.findIndex(item => item.name == object.name) < 0 &&
