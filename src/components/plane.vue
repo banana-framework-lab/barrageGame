@@ -24,7 +24,8 @@ const PLANE = {
   x: CANVAS.width / 2,
   y: CANVAS.height / 2,
   radius: 20,
-  strokeStyle: '#7ddbcf',
+  // strokeStyle: '#7ddbcf',
+  strokeStyle: '#FFFFFF',
   lineWidth: 8,
   image: new Image(),
   imageUrl: 'https://p2.a.yximgs.com/uhead/AB/2019/12/05/13/BMjAxOTEyMDUxMzIyMDVfNjIyODE3MTc4XzJfaGQxNzhfOTU5_s.jpg'
@@ -50,7 +51,8 @@ export default {
       targetArr: [],
       currentIndex: -1,
       score: 0,
-      offsetTime: 0
+      offsetTime: 0,
+      boomArray: []
     }
   },
   mounted() {
@@ -65,7 +67,7 @@ export default {
 
     // setInterval(() => {
     //   this.drawAll()
-    // }, 1000)
+    // }, 100)
 
     setInterval(() => {
       this.generateTarget()
@@ -220,7 +222,8 @@ export default {
       this.drawBullet()
       this.drawTarget()
       this.drawPlane()
-      this.drawScore()
+      // this.drawScore()
+      this.drawBoom()
     },
     drawBackground() {
       //循环运动
@@ -262,7 +265,7 @@ export default {
       this.ctx.restore();
     },
     getRandomInt(n, m) {
-      return Math.ceil(Math.random() * (m - n + 1)) + n;
+      return Math.floor(Math.random() * (m - n + 1)) + n;
     },
     drawText(txt, x, y, color) {
       this.ctx.fillStyle = color;
@@ -274,9 +277,9 @@ export default {
       this.drawText("击败数：" + String(this.score), 10, CANVAS.height - 10, "#fff");
     },
     getTargetRadius(blood) {
-      if (blood >= 40) {
+      if (blood >= 12) {
         return 30
-      } else if (blood < 40 && blood >= 20) {
+      } else if (blood < 12 && blood >= 7) {
         return 20
       } else {
         return 13
@@ -435,7 +438,8 @@ export default {
       ) {
         // 子弹击中了目标
         this.targetArr[targetArrIndex].blood--;
-        if (this.targetArr[targetArrIndex].blood == 0) {
+        if (this.targetArr[targetArrIndex].blood <= 0) {
+          this.createBoom(this.targetArr[targetArrIndex].x, this.targetArr[targetArrIndex].y)
           this.targetArr[targetArrIndex] = {
             status: 0
           }
@@ -489,27 +493,27 @@ export default {
 
         this.ctx.save();
         this.ctx.translate(item.x, item.y); //设置旋转的中心点
-        this.ctx.rotate((item.rotate += 15 * Math.PI) / 180);
+        this.ctx.rotate((item.rotate += 25 * Math.PI) / 180);
 
-        // // 设置三角形的起点坐标
-        // this.ctx.moveTo(0, 8.66)
-        // // 设置三角形的第一个坐标点坐标
-        // this.ctx.lineTo(10, -8.66);
-        // // 设置三角形的第二点坐标位置
-        // this.ctx.lineTo(-10, -8.66);
-        // // 设置自动闭合
-        // this.ctx.closePath();
-        // this.ctx.fillStyle = 'red';
-        // //进行绘制描边
-        // this.ctx.fill();
+        // 设置三角形的起点坐标
+        this.ctx.moveTo(0, 4.33)
+        // 设置三角形的第一个坐标点坐标
+        this.ctx.lineTo(5, -4.33);
+        // 设置三角形的第二点坐标位置
+        this.ctx.lineTo(-5, -4.33);
+        // 设置自动闭合
+        this.ctx.closePath();
+        this.ctx.fillStyle = '#ffffff';
+        //进行绘制描边
+        this.ctx.fill();
 
-        this.ctx.drawImage(
-          item.img,
-          - 7.5,
-          - 7.5,
-          15,
-          15
-        );
+        // this.ctx.drawImage(
+        //   item.img,
+        //   - 7.5,
+        //   - 7.5,
+        //   15,
+        //   15
+        // );
         this.ctx.restore();
 
       });
@@ -522,8 +526,9 @@ export default {
               name: item.name,
               image: item.headUrl,
               status: 1,
-              totalBlood: (Math.ceil(Math.random() * 50) + 1)
+              totalBlood: this.getRandomInt(1, 20)
               // totalBlood: 99999999999
+              // totalBlood: 1
             }
             if (
               this.targetArr.findIndex(item => item.name == object.name) < 0 &&
@@ -534,6 +539,70 @@ export default {
           })
           this.offsetTime = (new Date()).valueOf()
         }
+      })
+    },
+    createBoom(x, y) {
+      var count = parseInt(Math.random() * 15 + 8);
+      for (var i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2
+        const angleX = this.getRandomInt(6, 12) * Math.cos(angle)
+        const angleY = this.getRandomInt(6, 12) * Math.sin(angle)
+        const boom = {
+          x: x,
+          y: y,
+          color: "#" + parseInt(Math.random() * 16777216).toString(16),
+          r: this.getRandomInt(10, 25),
+          angle: angle,
+          angleX: angleX,
+          angleY: angleY,
+          rotate: 0
+        }
+        this.boomArray.push(boom)
+      }
+
+    },
+    drawBoom() {
+      this.boomArray = this.boomArray.filter((item) => {
+        if (item.r < 0.5) {
+          return false
+        } else {
+          return true
+        }
+      });
+
+      this.boomArray.forEach((item) => {
+
+        this.ctx.beginPath();
+        this.ctx.save();
+        this.ctx.translate(item.x, item.y); //设置旋转的中心点
+        this.ctx.rotate((item.rotate += 15 * Math.PI) / 180);
+
+        this.ctx.fillStyle = item.color;
+        // 设置三角形的起点坐标
+        const height = Math.sqrt((item.r * item.r) - (item.r * item.r / 4)) / 2
+        this.ctx.moveTo(0, height)
+        // 设置三角形的第一个坐标点坐标
+        this.ctx.lineTo(item.r / 2, -height);
+        // 设置三角形的第二点坐标位置
+        this.ctx.lineTo(-item.r / 2, -height);
+        // 设置自动闭合
+        this.ctx.closePath();
+        //进行绘制描边
+        this.ctx.fill();
+        this.ctx.restore();
+        this.ctx.closePath();
+
+        // this.ctx.beginPath();
+        // this.ctx.fillStyle = item.color;
+        // this.ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+        // this.ctx.fill();
+        // this.ctx.closePath();
+
+        item.x += item.angleX;
+        item.y += item.angleY;
+        item.r -= 0.5;
+        item.angleX *= 0.92;
+        item.angleY *= 0.92;
       })
     }
   }
