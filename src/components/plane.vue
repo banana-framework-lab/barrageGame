@@ -17,7 +17,8 @@ const _MAX_TARGET = 15; // 画面中一次最多出现的目标
 const CANVAS = {
   canvas: null,
   width: Math.ceil(720 * 1),
-  height: Math.ceil(1280 * 1)
+  height: Math.ceil(1560 * 1)
+  // height: Math.ceil(1280 * 1)
 }
 
 const PLANE = {
@@ -289,11 +290,11 @@ export default {
     },
     getTargetRadius(blood) {
       if (blood >= 12) {
-        return 30
+        return 40
       } else if (blood < 12 && blood >= 7) {
-        return 20
+        return 32
       } else {
-        return 13
+        return 25
       }
     },
     getTargetSpeed(blood) {
@@ -321,15 +322,15 @@ export default {
 
         this.ctx.beginPath();
 
-        this.ctx.font = "11px 微软雅黑";
+        // this.ctx.font = "11px 微软雅黑";
 
-        const name = item.name.slice(0, 5) + "...";
-        this.drawText(
-          name,
-          - name.length * 3,
-          radius * 2,
-          "#ffffff"
-        );
+        // const name = item.name.slice(0, 5) + "...";
+        // this.drawText(
+        //   name,
+        //   - name.length * 3,
+        //   radius * 2,
+        //   "#ffffff"
+        // );
         // const blood = item.blood + "/" + item.totalBlood
         // this.drawText(
         //   blood,
