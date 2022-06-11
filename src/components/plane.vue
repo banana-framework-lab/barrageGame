@@ -5,6 +5,13 @@
       style="margin:0px; padding:0px;"
     >
     </canvas>
+    <!-- <div>
+      <span
+        v-for="(item,index) in bulletArr"
+        :key="index"
+      >{{item.targetIndex}}</span>
+      {{bulletArr.length}}
+    </div> -->
   </div>
 </template>
 
@@ -16,14 +23,17 @@ const _MAX_TARGET = 15; // 画面中一次最多出现的目标
 
 const CANVAS = {
   canvas: null,
-  width: Math.ceil(720 * 1),
-  height: Math.ceil(1280 * 1)
+  width: Math.ceil(window.innerWidth * 1),
+  height: Math.ceil(window.innerHeight * 1),
+  originWidth: 720,
+  originHeight: 1560
+  // height: Math.ceil(1280 * 1)
 }
 
 const PLANE = {
   x: CANVAS.width / 2,
   y: CANVAS.height / 2,
-  radius: 20,
+  radius: 20 * (CANVAS.height / CANVAS.originHeight),
   radiusChange: 6,
   // strokeStyle: '#7ddbcf',
   strokeStyle: '#FFFFFF',
@@ -126,7 +136,7 @@ export default {
     },
     initTargetStack() {
       for (let index = 0; index < _MAX_TARGET; index++) {
-        this.targetArr.push({ status: 0 })
+        this.targetArr.push({ status: 0, actualBlood: 0 })
       }
     },
     generateTarget() {
@@ -289,11 +299,11 @@ export default {
     },
     getTargetRadius(blood) {
       if (blood >= 12) {
-        return 30
+        return 40 * (CANVAS.height / CANVAS.originHeight)
       } else if (blood < 12 && blood >= 7) {
-        return 20
+        return 32 * (CANVAS.height / CANVAS.originHeight)
       } else {
-        return 13
+        return 25 * (CANVAS.height / CANVAS.originHeight)
       }
     },
     getTargetSpeed(blood) {
@@ -323,13 +333,14 @@ export default {
 
         this.ctx.font = "11px 微软雅黑";
 
-        const name = item.name.slice(0, 5) + "...";
-        this.drawText(
-          name,
-          - name.length * 3,
-          radius * 2,
-          "#ffffff"
-        );
+        // let name = item.name.slice(0, 5) + "...";
+        // // name = index + name
+        // this.drawText(
+        //   name,
+        //   - name.length * 3,
+        //   radius * 2,
+        //   "#ffffff"
+        // );
         // const blood = item.blood + "/" + item.totalBlood
         // this.drawText(
         //   blood,
@@ -408,12 +419,12 @@ export default {
           this.createBullet(this.currentIndex);
         } else {
           // 重新寻找目标
-          const isHasTarget = this.targetArr.findIndex(item => { return item.actualBlood > 0 })
+          const isHasTarget = this.targetArr.findIndex(item => { return item.actualBlood > 0 && item.status == 1 })
           if (!(isHasTarget >= 0)) {
             return
           }
           let index = Math.floor(Math.random() * this.targetArr.length);
-          while (this.targetArr[index].actualBlood <= 0) {
+          while ((this.targetArr[index].actualBlood || 0) <= 0) {
             index = Math.floor(Math.random() * this.targetArr.length);
           }
           if (index !== -1) {
