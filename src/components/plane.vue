@@ -625,7 +625,7 @@ export default {
 .type-game {
   padding: 0px !important;
   margin: 0px !important;
-  background: #7ddbcf;
+  background: #000000;
   #container {
     background: #ffffff;
     display: block;
