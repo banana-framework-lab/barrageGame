@@ -136,7 +136,20 @@ export default {
     },
     initTargetStack() {
       for (let index = 0; index < _MAX_TARGET; index++) {
-        this.targetArr.push({ status: 0, actualBlood: 0 })
+        this.targetArr.push({
+          x: 0,
+          y: 0,
+          name: '',
+          image: '',
+          totalBlood: 0,
+          actualBlood: 0,
+          blood: 0,
+          rotate: 0,
+          status: 0,
+          xWay: 1,
+          yWay: 1,
+          moveConstant: 0
+        })
       }
     },
     generateTarget() {
@@ -255,7 +268,7 @@ export default {
         BACKGROUND.image,
         0, BACKGROUND.relativeY
       );
-      //补空白
+      // //补空白
       this.ctx.drawImage(
         BACKGROUND.image,
         0, CANVAS.height - BACKGROUND.relativeY,
@@ -379,11 +392,27 @@ export default {
         item.y += (item.yWay * Math.ceil(yStep > 0 ? yStep : yStep + 0.5));
         item.x += (item.xWay * Math.ceil(this.getTargetSpeed(item.blood) * item.moveConstant));
 
-        if (
-          (this.getX(item.x) * this.getX(item.x) + this.getY(item.y) * this.getY(item.y)) <= (PLANE.radius + radius + (PLANE.lineWidth / 2)) * (PLANE.radius + (PLANE.lineWidth / 2) + radius)
-        ) {
-          item.xWay *= -1;
-          item.yWay *= -1;
+        if ((Math.pow(this.getX(item.x), 2) + Math.pow(this.getY(item.y), 2)) <= Math.pow(PLANE.radius + radius + (PLANE.lineWidth / 2), 2)) {
+          if (Math.abs(this.getX(item.x)) > Math.abs(this.getY(item.y))) {
+            if (this.getX(item.x) > 0 && item.xWay > 0) {
+              item.xWay = 1;
+            } else if (this.getX(item.x) < 0 && item.xWay < 0) {
+              item.xWay = -1;
+            } else {
+              item.xWay *= -1;
+            }
+          } else if (Math.abs(this.getX(item.x)) < Math.abs(this.getY(item.y))) {
+            if (this.getY(item.y) < 0 && item.yWay > 0) {
+              item.yWay = 1;
+            } else if (this.getY(item.y) > 0 && item.yWay < 0) {
+              item.yWay = -1;
+            } else {
+              item.yWay *= -1;
+            }
+          } else {
+            item.xWay *= -1;
+            item.yWay *= -1;
+          }
         } else {
           if (item.x < (0 + radius) || item.x > (CANVAS.width - radius)) {
             item.xWay *= -1;
@@ -406,7 +435,7 @@ export default {
           return
         }
         let index = Math.floor(Math.random() * this.targetArr.length);
-        while (this.targetArr[index].actualBlood <= 0) {
+        while ((this.targetArr[index].actualBlood || 0) <= 0) {
           index = Math.floor(Math.random() * this.targetArr.length);
         }
         if (index !== -1) {
